@@ -15,9 +15,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/Expences
-    depends_on:
-      - mongodb
+      SPRING_DATA_MONGODB_URI: 'mongodb+srv://arpitkrishna930:fNBMW1168fbRhIBq@cluster71511.erbcyxl.mongodb.net/Expences?retryWrites=true&w=majority'
+
 
 volumes:
   mongo_data:
