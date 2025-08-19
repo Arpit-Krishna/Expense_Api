@@ -36,7 +36,7 @@ public class ExpenceServicies {
         User currentUser = userServicies.getCurrentUser(request)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        expense.setUser(currentUser);
+        expense.setUserId(currentUser.getId());
         expense.setDate(LocalDateTime.now());
 
         return expensesRepository.save(expense);
@@ -49,7 +49,7 @@ public class ExpenceServicies {
         Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Expence> expensePage = expensesRepository.findByUser(currentUser, pageable);
+        Page<Expence> expensePage = expensesRepository.findByUserId(currentUser.getId(), pageable);
         return new ExpenseResponse(
                 expensePage.getContent(),
                 expensePage.getNumber(),
@@ -61,7 +61,7 @@ public class ExpenceServicies {
     public Expence getExpenseById(HttpServletRequest request, String id) {
         User currentUser = userServicies.getCurrentUser(request)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return expensesRepository.findByUserAndId(currentUser, id).orElseThrow(() -> new RuntimeException("Expense not found"));
+        return expensesRepository.findByUserIdAndId(currentUser.getId(), id).orElseThrow(() -> new RuntimeException("Expense not found"));
     }
 
     public Expence updateExpense(String token, String expenseId, Expence expenseDetails) {
@@ -74,7 +74,7 @@ public class ExpenceServicies {
         Expence expense = expensesRepository.findById(expenseId)
                 .orElseThrow(() -> new RuntimeException("Expense not found"));
 
-        if (!expense.getUser().getId().equals(user.getId())) {
+        if (!expense.getUserId().equals(user.getId())) {
             throw new RuntimeException("You cannot update this expense");
         }
 
@@ -95,7 +95,7 @@ public class ExpenceServicies {
         Expence expense = expensesRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Expense not found"));
 
-        if (!expense.getUser().getId().equals(user.getId())) {
+        if (!expense.getUserId().equals(user.getId())) {
             throw new RuntimeException("You cannot delete this expense");
         }
 
@@ -108,7 +108,7 @@ public class ExpenceServicies {
         User currentUser = userServicies.getCurrentUser(request)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Expence> expenses = expensesRepository.findByUser(currentUser);
+        List<Expence> expenses = expensesRepository.findByUserId(currentUser.getId());
 
         double totalExpense = expenses.stream()
                 .mapToDouble(Expence::getAmount)

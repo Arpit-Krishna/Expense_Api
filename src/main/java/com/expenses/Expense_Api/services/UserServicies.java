@@ -44,6 +44,8 @@ public class UserServicies implements UserDetailsService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (new BCryptPasswordEncoder().matches(password, user.getPassword())) {
+            //get data from db
+
             return jwtUtil.generateToken(username);
         } else {
             throw new RuntimeException("Invalid credentials");

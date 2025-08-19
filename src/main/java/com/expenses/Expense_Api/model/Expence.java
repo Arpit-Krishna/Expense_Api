@@ -16,17 +16,20 @@ public class Expence {
     private double amount;
     private LocalDateTime date;
 
-    @DBRef
-    private User user;
+    //@DBRef
+    //private User user;
+    private String userId;
+
 
     public Expence() {}
 
-    public Expence(String title, String description, double amount, LocalDateTime date, User user) {
+    public Expence(String title, String description, double amount, LocalDateTime date, String userId) {
         this.title = title;
         this.description = description;
         this.amount = amount;
         this.date = date;
-        this.user = user;
+        this.userId = userId;
+        //this.user = user;
     }
 
     public String getId() { return id; }
@@ -44,6 +47,8 @@ public class Expence {
     public LocalDateTime getDate() { return date; }
     public void setDate(LocalDateTime date) { this.date = date; }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    //public User getUser() { return user; }
+    //public void setUser(User user) { this.user = user; }
 }

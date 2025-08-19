@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ExpensesRepository extends MongoRepository<Expence, String> {
-    Page<Expence> findByUser(User user, Pageable pageable);
-    List<Expence> findByUser(User user);
+    Page<Expence> findByUserId(String userId, Pageable pageable);
+    List<Expence> findByUserId(String userId);
 
-    Optional<Expence> findByUserAndId(User user, String id);
+    Optional<Expence> findByUserIdAndId(String userId, String id);
 
 }
