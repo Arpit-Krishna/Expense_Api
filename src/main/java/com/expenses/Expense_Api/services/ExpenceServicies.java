@@ -4,6 +4,7 @@ import com.expenses.Expense_Api.DTO.ExpenseResponse;
 import com.expenses.Expense_Api.exception.ApiException;
 import com.expenses.Expense_Api.model.Expence;
 import com.expenses.Expense_Api.model.User;
+import com.expenses.Expense_Api.notify.LimitAlertService;
 import com.expenses.Expense_Api.repository.ExpensesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,8 @@ public class ExpenceServicies {
     private UserServicies userServicies;
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private LimitAlertService limitAlerts;
 
     public Expence addExpense(Expence expense) {
         User currentUser = userServicies.currentUser();
@@ -44,13 +47,16 @@ public class ExpenceServicies {
 
         expense.setId(null);
         expense.setUserId(currentUser.getId());
+        expense.setRecurringId(null);
         expense.setTitle(expense.getTitle().trim());
         expense.setCategory(expense.getCategory());
         if (expense.getDate() == null) expense.setDate(now);
         expense.setCreatedAt(now);
         expense.setUpdatedAt(now);
 
-        return expensesRepository.save(expense);
+        Expence saved = expensesRepository.save(expense);
+        limitAlerts.expenseChanged(currentUser.getId(), saved.getDate());
+        return saved;
     }
 
     public ExpenseResponse getMyExpenses(int page, int size, String sortBy, String sortDir,
@@ -117,7 +123,9 @@ public class ExpenceServicies {
         if (details.getDate() != null) expense.setDate(details.getDate());
         expense.setUpdatedAt(LocalDateTime.now());
 
-        return expensesRepository.save(expense);
+        Expence saved = expensesRepository.save(expense);
+        limitAlerts.expenseChanged(saved.getUserId(), saved.getDate());
+        return saved;
     }
 
     public String deleteExpense(String id) {

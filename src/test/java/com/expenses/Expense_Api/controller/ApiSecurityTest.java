@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(properties = {
         "spring.data.mongodb.uri=mongodb://localhost:27017/test",
-        "spring.data.mongodb.auto-index-creation=false"
+        "spring.data.mongodb.auto-index-creation=false", "app.scheduler.enabled=false"
 })
 @AutoConfigureMockMvc
 class ApiSecurityTest {

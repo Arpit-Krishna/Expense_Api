@@ -2,6 +2,8 @@ package com.expenses.Expense_Api.config;
 
 import com.expenses.Expense_Api.model.Budget;
 import com.expenses.Expense_Api.model.Expence;
+import com.expenses.Expense_Api.model.NotificationSettings;
+import com.expenses.Expense_Api.model.RecurringPayment;
 import com.expenses.Expense_Api.model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,8 @@ public class MongoIndexInitializer {
         create(Expence.class, new Index().on("userId", Sort.Direction.ASC).on("date", Sort.Direction.DESC).named("userId_date"));
         create(User.class, new Index().on("username", Sort.Direction.ASC).unique().named("username_unique"));
         create(Budget.class, new Index().on("userId", Sort.Direction.ASC).unique().named("userId_unique"));
+        create(RecurringPayment.class, new Index().on("userId", Sort.Direction.ASC).named("userId"));
+        create(NotificationSettings.class, new Index().on("userId", Sort.Direction.ASC).unique().named("userId_unique"));
     }
 
     private void create(Class<?> type, Index index) {

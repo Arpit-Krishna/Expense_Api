@@ -32,10 +32,13 @@ public class BudgetService {
     private UserServicies userServicies;
 
     public Budget getBudget() {
-        User user = userServicies.currentUser();
-        return budgetRepository.findByUserId(user.getId()).orElseGet(() -> {
+        return budgetFor(userServicies.currentUser().getId());
+    }
+
+    public Budget budgetFor(String userId) {
+        return budgetRepository.findByUserId(userId).orElseGet(() -> {
             Budget empty = new Budget();
-            empty.setUserId(user.getId());
+            empty.setUserId(userId);
             return empty;
         });
     }
@@ -84,9 +87,14 @@ public class BudgetService {
         } catch (DateTimeParseException e) {
             throw ApiException.badRequest("Month must look like 2026-09");
         }
-        Budget budget = getBudget();
+        return statusFor(userServicies.currentUser().getId(), ym, today);
+    }
+
+    /** Budget status for any user, for the scheduler and email alerts which run without a login. */
+    public BudgetStatus statusFor(String userId, YearMonth ym, LocalDate today) {
+        Budget budget = budgetFor(userId);
         List<Expence> expenses = expensesRepository.findByUserIdAndDateBetween(
-                budget.getUserId(), ym.atDay(1).atStartOfDay().minusNanos(1), ym.plusMonths(1).atDay(1).atStartOfDay());
+                userId, ym.atDay(1).atStartOfDay().minusNanos(1), ym.plusMonths(1).atDay(1).atStartOfDay());
         return computeStatus(budget, ym, expenses, today);
     }
 

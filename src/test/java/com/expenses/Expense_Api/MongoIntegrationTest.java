@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * docker run -d -p 27017:27017 mongo:7 && MONGO_TEST_URI=mongodb://localhost:27017/expense_it ./mvnw test
  */
 @EnabledIfEnvironmentVariable(named = "MONGO_TEST_URI", matches = ".+")
-@SpringBootTest(properties = {"spring.data.mongodb.uri=${MONGO_TEST_URI}", "app.mongo.ensure-indexes=false"})
+@SpringBootTest(properties = {"spring.data.mongodb.uri=${MONGO_TEST_URI}", "app.mongo.ensure-indexes=false", "app.scheduler.enabled=false"})
 @AutoConfigureMockMvc
 class MongoIntegrationTest {
 

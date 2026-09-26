@@ -40,6 +40,9 @@ public class Expence {
 
     private String userId;
 
+    /** Set when the expense was logged automatically from a recurring payment. */
+    private String recurringId;
+
     public Expence() {}
 
     public Expence(String title, String description, double amount, LocalDateTime date, String userId) {
@@ -80,4 +83,7 @@ public class Expence {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getRecurringId() { return recurringId; }
+    public void setRecurringId(String recurringId) { this.recurringId = recurringId; }
 }

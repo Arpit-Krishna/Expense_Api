@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 // The Mongo client connects lazily, so the context starts without a running database.
 @SpringBootTest(properties = {
 		"spring.data.mongodb.uri=mongodb://localhost:27017/test",
-		"spring.data.mongodb.auto-index-creation=false"
+		"spring.data.mongodb.auto-index-creation=false", "app.scheduler.enabled=false"
 })
 class ExpenseApiApplicationTests {
 
