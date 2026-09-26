@@ -1,5 +1,6 @@
 package com.expenses.Expense_Api.model;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -28,6 +29,7 @@ public class Expence {
     private String category;
 
     @Positive(message = "Amount must be greater than zero")
+    @Max(value = 1_000_000_000, message = "Amount is too large")
     private double amount;
 
     /** When the money was spent. Defaults to now when the client sends none. */

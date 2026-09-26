@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
@@ -72,7 +74,7 @@ public class ExpenceServicies {
         if (from != null) filters.add(Criteria.where("date").gte(from.atStartOfDay()));
         if (to != null) filters.add(Criteria.where("date").lt(to.plusDays(1).atStartOfDay()));
         if (search != null && !search.isBlank()) {
-            String q = Pattern.quote(search.trim());
+            String q = Pattern.quote(search.trim().substring(0, Math.min(search.trim().length(), 100)));
             filters.add(new Criteria().orOperator(
                     Criteria.where("title").regex(q, "i"),
                     Criteria.where("description").regex(q, "i")));
@@ -81,7 +83,7 @@ public class ExpenceServicies {
         Query query = new Query(new Criteria().andOperator(filters.toArray(new Criteria[0])));
         long total = mongoTemplate.count(query, Expence.class);
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Sort sort = "asc".equalsIgnoreCase(sortDir) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort.and(Sort.by("id").descending()));
         List<Expence> content = mongoTemplate.find(query.with(pageable), Expence.class);
 
@@ -90,10 +92,13 @@ public class ExpenceServicies {
         return new ExpenseResponse(content, page, totalPages, total, totalAmount);
     }
 
+    /** Totals the matching expenses inside MongoDB instead of loading every document. */
     private double sumAmount(List<Criteria> filters) {
-        Query query = new Query(new Criteria().andOperator(filters.toArray(new Criteria[0])));
-        query.fields().include("amount");
-        return mongoTemplate.find(query, Expence.class).stream().mapToDouble(Expence::getAmount).sum();
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(new Criteria().andOperator(filters.toArray(new Criteria[0]))),
+                Aggregation.group().sum("amount").as("total"));
+        Document result = mongoTemplate.aggregate(aggregation, Expence.class, Document.class).getUniqueMappedResult();
+        return result == null || !(result.get("total") instanceof Number n) ? 0 : n.doubleValue();
     }
 
     public Expence getExpenseById(String id) {

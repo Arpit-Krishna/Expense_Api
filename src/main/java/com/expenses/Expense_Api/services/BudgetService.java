@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 @Service
 public class BudgetService {
 
+    static final int MAX_CATEGORIES = 50;
+
     @Autowired
     private BudgetRepository budgetRepository;
     @Autowired
@@ -49,6 +51,9 @@ public class BudgetService {
         }
 
         Map<String, Double> limits = new LinkedHashMap<>();
+        if (input.getCategoryLimits() != null && input.getCategoryLimits().size() > MAX_CATEGORIES) {
+            throw ApiException.badRequest("A budget can have at most " + MAX_CATEGORIES + " categories");
+        }
         if (input.getCategoryLimits() != null) {
             for (Map.Entry<String, Double> e : input.getCategoryLimits().entrySet()) {
                 String name = e.getKey() == null ? "" : e.getKey().trim();
@@ -68,7 +73,7 @@ public class BudgetService {
         budget.setMonthlyIncome(input.getMonthlyIncome());
         budget.setSavingsTarget(input.getSavingsTarget());
         budget.setFixedCategories(input.getFixedCategories().stream()
-                .filter(c -> c != null && !c.isBlank()).map(String::trim).distinct().toList());
+                .filter(c -> c != null && !c.isBlank()).map(String::trim).distinct().limit(MAX_CATEGORIES).toList());
         return budgetRepository.save(budget);
     }
 

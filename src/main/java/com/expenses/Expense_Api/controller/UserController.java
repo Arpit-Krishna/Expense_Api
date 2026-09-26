@@ -4,6 +4,7 @@ import com.expenses.Expense_Api.DTO.LoginRequest;
 import com.expenses.Expense_Api.DTO.SignupRequest;
 import com.expenses.Expense_Api.DTO.UserResponceDTO;
 import com.expenses.Expense_Api.services.UserServicies;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,8 @@ public class UserController {
     }
 
     @PostMapping("/auth/login")
-    public String login(@RequestBody LoginRequest user) {
-        return userServicies.login(user.getUsername(), user.getPassword());
+    public String login(@RequestBody LoginRequest user, HttpServletRequest request) {
+        return userServicies.login(user.getUsername(), user.getPassword(), request.getRemoteAddr());
     }
 
     @GetMapping("/auth/me")
