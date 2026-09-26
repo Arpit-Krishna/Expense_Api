@@ -1,18 +1,15 @@
 package com.expenses.Expense_Api.controller;
 
-import com.expenses.Expense_Api.DTO.ExpenceSResponse;
 import com.expenses.Expense_Api.DTO.ExpenseResponse;
 import com.expenses.Expense_Api.model.Expence;
 import com.expenses.Expense_Api.services.ExpenceServicies;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -23,55 +20,40 @@ public class ExpenceController {
     private ExpenceServicies expenseServicies;
 
     @PostMapping("/expense")
-    public ResponseEntity<ExpenceSResponse> createExpense(HttpServletRequest request,
-                                                          @Valid @RequestBody Expence expense,
-                                                          BindingResult result){
-
-        Expence saved = expenseServicies.addExpense(request, expense);
-
-        ExpenceSResponse dto = new ExpenceSResponse(
-                saved.getId(),
-                saved.getTitle(),
-                saved.getDescription(),
-                saved.getAmount(),
-                saved.getDate(),
-                saved.getUserId()
-        );
-
-        return ResponseEntity.ok(dto);
+    public Expence createExpense(@Valid @RequestBody Expence expense) {
+        return expenseServicies.addExpense(expense);
     }
 
     @GetMapping("/expense")
     public ExpenseResponse getExpense(
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "10")   int size,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "date") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir,
-            HttpServletRequest request){
-        return expenseServicies.getMyExpenses(request, page, size, sortBy, sortDir);
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String q) {
+        return expenseServicies.getMyExpenses(page, size, sortBy, sortDir, category, from, to, q);
     }
 
     @GetMapping("/expense/{id}")
-    public Expence getExpenseById(HttpServletRequest request, @PathVariable String id){
-        return expenseServicies.getExpenseById(request, id);
+    public Expence getExpenseById(@PathVariable String id) {
+        return expenseServicies.getExpenseById(id);
     }
 
     @PutMapping("/expense/{id}")
-    public Expence updateExpense(HttpServletRequest request, @RequestBody Expence expense, @PathVariable String id){
-        String token = request.getHeader("Authorization").substring(7);
-        return expenseServicies.updateExpense(token, id, expense);
+    public Expence updateExpense(@Valid @RequestBody Expence expense, @PathVariable String id) {
+        return expenseServicies.updateExpense(id, expense);
     }
 
     @DeleteMapping("/expense/{id}")
-    public ResponseEntity<String> deleteExpense(HttpServletRequest request, @PathVariable String id){
-        String message = expenseServicies.deleteExpense(request, id);
-        return ResponseEntity.ok(message);
+    public ResponseEntity<String> deleteExpense(@PathVariable String id) {
+        return ResponseEntity.ok(expenseServicies.deleteExpense(id));
     }
 
     @GetMapping("/expense/summary")
-    public Map<String, Object> getExpenseSummary(HttpServletRequest request) {
-        return expenseServicies.getExpenseSummary(request);
+    public Map<String, Object> getExpenseSummary() {
+        return expenseServicies.getExpenseSummary();
     }
-
-
 }

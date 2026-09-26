@@ -1,11 +1,10 @@
 package com.expenses.Expense_Api.model;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 
 import java.time.LocalDateTime;
 
@@ -14,21 +13,30 @@ public class Expence {
     @Id
     private String id;
 
-    @NotBlank(message = "Title cannot be null or empty")
+    @NotBlank(message = "Title cannot be empty")
+    @Size(max = 100, message = "Title must be at most 100 characters")
     private String title;
 
-    @NotBlank(message = "Description cannot be null or empty")
+    /**
+     * Optional free-text note. Older records stored the category here, so
+     * {@link #getCategory()} falls back to it when no category is set.
+     */
+    @Size(max = 500, message = "Note must be at most 500 characters")
     private String description;
 
-    @NotNull(message = "Amount cannot be null")
+    @Size(max = 40, message = "Category must be at most 40 characters")
+    private String category;
+
     @Positive(message = "Amount must be greater than zero")
     private double amount;
+
+    /** When the money was spent. Defaults to now when the client sends none. */
     private LocalDateTime date;
 
-    //@DBRef
-    //private User user;
-    private String userId;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
+    private String userId;
 
     public Expence() {}
 
@@ -38,7 +46,6 @@ public class Expence {
         this.amount = amount;
         this.date = date;
         this.userId = userId;
-        //this.user = user;
     }
 
     public String getId() { return id; }
@@ -50,14 +57,25 @@ public class Expence {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
+    public String getCategory() {
+        if (category != null && !category.isBlank()) return category;
+        if (description != null && !description.isBlank()) return description;
+        return "Other";
+    }
+    public void setCategory(String category) { this.category = category; }
+
     public double getAmount() { return amount; }
     public void setAmount(double amount) { this.amount = amount; }
 
     public LocalDateTime getDate() { return date; }
     public void setDate(LocalDateTime date) { this.date = date; }
 
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
-    //public User getUser() { return user; }
-    //public void setUser(User user) { this.user = user; }
 }

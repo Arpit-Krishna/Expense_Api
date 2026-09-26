@@ -15,5 +15,6 @@ public class ExpenseResponse {
     private int currentPage;
     private int totalPages;
     private long totalItems;
-
+    /** Sum of amounts across every page that matches the filters. */
+    private double totalAmount;
 }
