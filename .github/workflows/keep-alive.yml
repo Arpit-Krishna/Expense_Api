@@ -1,0 +1,34 @@
+name: Keep API awake
+
+# Render's free tier sleeps after 15 minutes without traffic, and the free Atlas cluster pauses when
+# nothing touches it. This pings /health?db=true, which wakes the API and runs a tiny database ping.
+# GitHub may start scheduled runs late, and turns the schedule off after 60 days with no commits.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Ping the API and database
+        env:
+          URL: https://expense-api-yfya.onrender.com/health?db=true
+        run: |
+          # A cold start can take a minute or more, so allow long requests and a few retries.
+          for attempt in 1 2 3 4; do
+            code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 90 "$URL" || echo 000)
+            echo "Attempt $attempt: HTTP $code $(cat body.txt 2>/dev/null)"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 20
+          done
+          echo "::error::The API or its database did not answer. Check Render and MongoDB Atlas."
+          exit 1

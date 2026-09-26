@@ -49,6 +49,8 @@ class MongoIntegrationTest {
         indexes.ensureIndexes();
         assertThat(mongo.indexOps(Expence.class).getIndexInfo()).anyMatch(i -> i.getName().equals("userId_date"));
 
+        mvc.perform(get("/health").param("db", "true")).andExpect(status().isOk()).andExpect(jsonPath("$.db").value("ok"));
+
         String arpit = signup("arpit");
         String other = signup("other");
         mvc.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)

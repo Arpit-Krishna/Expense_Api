@@ -3,6 +3,7 @@ package com.expenses.Expense_Api.controller;
 import com.expenses.Expense_Api.exception.ApiException;
 import com.expenses.Expense_Api.model.Expence;
 import com.expenses.Expense_Api.services.BudgetService;
+import com.expenses.Expense_Api.services.DatabaseHealth;
 import com.expenses.Expense_Api.services.ExpenceServicies;
 import com.expenses.Expense_Api.services.UserServicies;
 import com.expenses.Expense_Api.util.JwTUtil;
@@ -44,9 +45,23 @@ class ApiSecurityTest {
         return jwtUtil.generateToken("arpit");
     }
 
+    @MockitoBean DatabaseHealth databaseHealth;
+
     @Test
     void healthIsPublic() throws Exception {
-        mvc.perform(get("/health")).andExpect(status().isOk());
+        mvc.perform(get("/health")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ok"))
+                .andExpect(jsonPath("$.db").doesNotExist());
+    }
+
+    @Test
+    void healthWithDbPingsMongo() throws Exception {
+        when(databaseHealth.isUp()).thenReturn(true);
+        mvc.perform(get("/health").param("db", "true"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.db").value("ok"));
+
+        when(databaseHealth.isUp()).thenReturn(false);
+        mvc.perform(get("/health").param("db", "true"))
+                .andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.db").value("down"));
     }
 
     @Test
