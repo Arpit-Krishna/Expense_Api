@@ -48,13 +48,14 @@ public class EmailSender {
                        @Value("${app.mail.from:}") String from,
                        @Value("${app.mail.brevo-url:https://api.brevo.com}") String brevoUrl,
                        @Value("${app.mail.resend-url:https://api.resend.com}") String resendUrl) {
-        String brevo = trim(brevoKey);
-        String resend = trim(resendKey);
+        String brevo = cleanKey(brevoKey);
+        String resend = cleanKey(resendKey);
         String sender = trim(from);
         if (!brevo.isEmpty()) {
             provider = sender.isEmpty() ? Provider.NONE : Provider.BREVO;
             apiKey = brevo;
             if (sender.isEmpty()) log.warn("BREVO_API_KEY is set but MAIL_FROM is not. Set MAIL_FROM to a sender verified in Brevo.");
+            if (isSmtpKey(brevo)) log.warn("BREVO_API_KEY holds an SMTP key (xsmtpsib-). Create an API key (xkeysib-) in Brevo instead.");
         } else if (!resend.isEmpty()) {
             provider = Provider.RESEND;
             apiKey = resend;
@@ -75,6 +76,19 @@ public class EmailSender {
 
     private static String trim(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    /** Keys pasted into a dashboard often pick up quotes, spaces or a line break. None of those belong in a key. */
+    static String cleanKey(String s) {
+        String key = trim(s);
+        if (key.length() >= 2 && (key.startsWith("\"") && key.endsWith("\"") || key.startsWith("'") && key.endsWith("'"))) {
+            key = key.substring(1, key.length() - 1);
+        }
+        return key.replaceAll("\\s+", "");
+    }
+
+    private static boolean isSmtpKey(String key) {
+        return key.startsWith("xsmtpsib-");
     }
 
     public boolean isEnabled() {
@@ -100,6 +114,7 @@ public class EmailSender {
     public Result deliver(String to, String subject, String html, String text) {
         if (!isEnabled()) return Result.failed("Emails are not set up on the server yet");
         if (to == null || to.isBlank()) return Result.failed("Add an email address first");
+        if (provider == Provider.BREVO && isSmtpKey(apiKey)) return Result.failed(SMTP_KEY_ADVICE);
         try {
             if (provider == Provider.BREVO) {
                 client.post().uri("/v3/smtp/email")
@@ -142,6 +157,9 @@ public class EmailSender {
         }
     }
 
+    static final String SMTP_KEY_ADVICE = "BREVO_API_KEY holds a Brevo SMTP key (it starts with xsmtpsib-). In Brevo, open "
+            + "SMTP & API > API Keys, create an API key (it starts with xkeysib-) and put that in BREVO_API_KEY instead.";
+
     /** Turns the provider's answer into advice. Addresses are hidden, since the provider account belongs to the server owner. */
     static String explain(Provider provider, int status, String providerMessage) {
         String m = providerMessage == null ? "" : providerMessage.toLowerCase(Locale.ROOT);
@@ -157,7 +175,11 @@ public class EmailSender {
             if (m.contains("ip") && m.contains("authorised") || m.contains("unrecognised ip") || m.contains("authorized ips")) {
                 return "Brevo blocked the server's IP address. In Brevo, open Security > Authorised IPs and turn off the IP restriction.";
             }
-            if (status == 401 || m.contains("key not found")) return "Brevo rejected the API key. Check BREVO_API_KEY on the server.";
+            if (status == 401 || m.contains("key not found")) {
+                return "Brevo rejected the API key" + (m.isBlank() ? "" : " (Brevo said: " + providerMessage.trim() + ")")
+                        + ". BREVO_API_KEY must be an API key from SMTP & API > API Keys that starts with xkeysib-, "
+                        + "pasted with no quotes or spaces. If the key was just created, check it has not been deleted.";
+            }
         } else {
             if (m.contains("testing emails") || m.contains("verify a domain") || m.contains("own email address")) {
                 return "Resend only sends to the email address your Resend account was created with until you verify a "

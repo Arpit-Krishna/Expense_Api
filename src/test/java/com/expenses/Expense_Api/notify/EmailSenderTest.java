@@ -85,6 +85,32 @@ class EmailSenderTest {
     }
 
     @Test
+    void cleansPastedKeysAndSendsTheCleanKey() throws IOException {
+        assertThat(EmailSender.cleanKey("  \"xkeysib-abc\"\n")).isEqualTo("xkeysib-abc");
+        assertThat(EmailSender.cleanKey("'xkeysib-abc'")).isEqualTo("xkeysib-abc");
+        assertThat(EmailSender.cleanKey("xkeysib-a bc")).isEqualTo("xkeysib-abc");
+
+        EmailSender sender = new EmailSender(" \"xkeysib-test\" ", "", "me@gmail.com", start(201, "{}"), "http://unused");
+        assertThat(sender.deliver("friend@example.com", "Hi", "<p>Hi</p>", "Hi").sent()).isTrue();
+        assertThat(brevoKey.get()).isEqualTo("xkeysib-test");
+    }
+
+    @Test
+    void spotsAnSmtpKeyWithoutCallingBrevo() {
+        EmailSender sender = new EmailSender("xsmtpsib-abc", "", "me@gmail.com", "http://127.0.0.1:1", "http://unused");
+
+        EmailSender.Result result = sender.deliver("friend@example.com", "Hi", "<p>Hi</p>", "Hi");
+        assertThat(result.sent()).isFalse();
+        assertThat(result.reason()).contains("SMTP key").contains("xkeysib-");
+    }
+
+    @Test
+    void rejectedKeyShowsBrevosOwnWords() {
+        assertThat(EmailSender.explain(EmailSender.Provider.BREVO, 401, "Key not found"))
+                .startsWith("Brevo rejected the API key (Brevo said: Key not found)").contains("xkeysib-");
+    }
+
+    @Test
     void postsToResendWithTheTestSenderByDefault() throws IOException {
         EmailSender sender = resend(start(200, "{\"id\":\"1\"}"));
 
