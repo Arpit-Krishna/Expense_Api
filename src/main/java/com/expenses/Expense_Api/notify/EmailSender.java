@@ -172,8 +172,9 @@ public class EmailSender {
             if (m.contains("not yet activated") || m.contains("account") && m.contains("activat")) {
                 return "Your Brevo account is not activated for sending yet. Finish the activation Brevo asks for, then try again.";
             }
-            if (m.contains("ip") && m.contains("authorised") || m.contains("unrecognised ip") || m.contains("authorized ips")) {
-                return "Brevo blocked the server's IP address. In Brevo, open Security > Authorised IPs and turn off the IP restriction.";
+            if (m.contains("ip address") || m.contains("authorised_ips") || m.contains("authorized_ips")
+                    || m.contains("ip") && (m.contains("authoris") || m.contains("authoriz") || m.contains("unrecogni"))) {
+                return "Brevo blocked the server's IP address. In Brevo, open Security > Authorised IPs and turn off blocking of unknown IP addresses.";
             }
             if (status == 401 || m.contains("key not found")) {
                 return "Brevo rejected the API key" + (m.isBlank() ? "" : " (Brevo said: " + providerMessage.trim() + ")")

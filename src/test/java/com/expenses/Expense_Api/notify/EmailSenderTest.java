@@ -105,6 +105,13 @@ class EmailSenderTest {
     }
 
     @Test
+    void blockedIpIsNotBlamedOnTheKey() {
+        assertThat(EmailSender.explain(EmailSender.Provider.BREVO, 401,
+                "Unauthorized IP address 1.2.3.4. Add it at https://app.brevo.com/security/authorised_ips")).contains("Authorised IPs");
+        assertThat(EmailSender.explain(EmailSender.Provider.BREVO, 401, "IP address not authorized")).contains("Authorised IPs");
+    }
+
+    @Test
     void rejectedKeyShowsBrevosOwnWords() {
         assertThat(EmailSender.explain(EmailSender.Provider.BREVO, 401, "Key not found"))
                 .startsWith("Brevo rejected the API key (Brevo said: Key not found)").contains("xkeysib-");
