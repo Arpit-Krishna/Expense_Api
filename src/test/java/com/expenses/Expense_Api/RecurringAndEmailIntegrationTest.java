@@ -52,6 +52,7 @@ class RecurringAndEmailIntegrationTest {
         mongo.getDb().drop();
         when(emailSender.isEnabled()).thenReturn(true);
         when(emailSender.send(anyString(), anyString(), anyString(), anyString())).thenReturn(true);
+        when(emailSender.deliver(anyString(), anyString(), anyString(), anyString())).thenReturn(new EmailSender.Result(true, null));
         token = mvc.perform(post("/auth/signup").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"arpit\",\"password\":\"password123\",\"email\":\"arpit@example.com\"}"))
                 .andReturn().getResponse().getContentAsString();
@@ -175,6 +176,13 @@ class RecurringAndEmailIntegrationTest {
         mvc.perform(put("/api/notifications").header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"not-an-email\",\"weeklySummary\":true,\"limitAlerts\":true,\"dueReminders\":true}"))
                 .andExpect(status().isBadRequest());
+        when(emailSender.deliver(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(new EmailSender.Result(false, "Resend only sends to the email address your Resend account was created with"));
+        mvc.perform(post("/api/notifications/test").header("Authorization", token))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.message").value("Resend only sends to the email address your Resend account was created with"));
+        // A failed test does not count toward the one-a-minute limit.
+        when(emailSender.deliver(anyString(), anyString(), anyString(), anyString())).thenReturn(new EmailSender.Result(true, null));
         mvc.perform(post("/api/notifications/test").header("Authorization", token)).andExpect(status().isOk());
         mvc.perform(post("/api/notifications/test").header("Authorization", token)).andExpect(status().isTooManyRequests());
         mvc.perform(get("/api/notifications")).andExpect(status().isUnauthorized());

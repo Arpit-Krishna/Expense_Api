@@ -81,9 +81,11 @@ public class NotificationService {
         }
         lastTest.put(userId, now);
         Emails.Email email = Emails.test(appUrl);
-        if (!emailSender.send(s.getEmail(), email.subject(), email.html(), email.text())) {
-            throw new ApiException(org.springframework.http.HttpStatus.BAD_GATEWAY,
-                    "The email provider did not accept the email. Check the API key and address.");
+        EmailSender.Result result = emailSender.deliver(s.getEmail(), email.subject(), email.html(), email.text());
+        if (!result.sent()) {
+            // Let the user try again straight away after fixing the address.
+            lastTest.remove(userId);
+            throw new ApiException(org.springframework.http.HttpStatus.BAD_GATEWAY, result.reason());
         }
     }
 
