@@ -5,7 +5,7 @@ name: Keep API awake
 # GitHub may start scheduled runs late, and turns the schedule off after 60 days with no commits.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions: {}
